@@ -40,6 +40,10 @@
         </div>
         <h1 id="student-group-title">YouTube Kanal Akademiyasi</h1>
         <p class="subtitle">Savolingizni pastda batafsil yozib qoldiring. Admin javobi to'g'ridan-to'g'ri telegramingizga yuboriladi.</p>
+        <div class="info-bar">
+          <span>🕐 Savol yuborish: <strong>10:00 — 22:00</strong></span>
+          <span>📝 Kunlik limit: <strong>3 ta savol</strong></span>
+        </div>
       </header>
 
       <div class="card glassmorphic">
@@ -54,6 +58,23 @@
                 required
               ></textarea>
               <div class="char-counter"><span id="char-count">0</span> / 1000</div>
+            </div>
+          </div>
+
+          <!-- Rasm yuklash -->
+          <div class="form-group">
+            <label>Rasm biriktirish (ixtiyoriy, maks. 5MB)</label>
+            <div class="file-upload-wrapper">
+              <input type="file" id="student-file-input" accept="image/*" style="display: none;">
+              <button type="button" id="student-select-file-btn" class="btn btn-secondary btn-sm">
+                <span>📷 Rasm tanlash</span>
+              </button>
+              <div id="student-file-info" class="selected-file-info" style="display: none;">
+                <img id="student-file-preview" class="file-preview-img" src="" alt="preview">
+                <span id="student-file-name" class="file-name">file.jpg</span>
+                <span id="student-file-size" class="file-size">(245 KB)</span>
+                <button type="button" id="student-remove-file-btn" class="remove-file-btn">&times;</button>
+              </div>
             </div>
           </div>
           
@@ -76,6 +97,7 @@
         </div>
         <h2>Rahmat!</h2>
         <p>Savolingiz muvaffaqiyatli qabul qilindi. Tez orada telegram orqali javob olasiz.</p>
+        <p id="remaining-info" class="remaining-info"></p>
         <button id="close-app-btn" class="btn btn-secondary btn-block">Oynani yopish</button>
       </div>
     </section>
@@ -130,6 +152,7 @@
         <div class="original-question-box">
           <div class="label">Savol:</div>
           <p id="reply-question-text">Savol matni bu yerda ko'rinadi...</p>
+          <img id="reply-question-image" src="" alt="Student uploaded image" style="display: none; max-width: 100%; border-radius: 8px; margin-top: 10px; border: 1px solid rgba(255,255,255,0.1);">
         </div>
 
         <form id="reply-form">
