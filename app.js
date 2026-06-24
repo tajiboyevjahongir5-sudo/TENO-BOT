@@ -32,6 +32,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const submitQuestionBtn = document.getElementById('submit-question-btn');
   const closeAppBtn = document.getElementById('close-app-btn');
 
+  const studentFileInput = document.getElementById('student-file-input');
+  const studentSelectFileBtn = document.getElementById('student-select-file-btn');
+  const studentFileInfo = document.getElementById('student-file-info');
+  const studentFileName = document.getElementById('student-file-name');
+  const studentFileSize = document.getElementById('student-file-size');
+  const studentRemoveFileBtn = document.getElementById('student-remove-file-btn');
+  const studentFilePreview = document.getElementById('student-file-preview');
+
   const adminView = document.getElementById('admin-view');
   const adminTabs = document.getElementById('admin-tabs');
   const adminContent = document.getElementById('admin-content');
@@ -46,6 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const replyStudentUsername = document.getElementById('reply-student-username');
   const replyQuestionTime = document.getElementById('reply-question-time');
   const replyQuestionText = document.getElementById('reply-question-text');
+  const replyQuestionImage = document.getElementById('reply-question-image');
   const replyText = document.getElementById('reply-text');
   const selectFileBtn = document.getElementById('select-file-btn');
   const fileInput = document.getElementById('reply-file-input');
@@ -170,6 +179,52 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
+    // Student File Upload Listeners
+    if (studentSelectFileBtn) {
+      studentSelectFileBtn.addEventListener('click', () => {
+        studentFileInput.click();
+      });
+
+      studentFileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        if (file.size > 5 * 1024 * 1024) {
+          showToast('Fayl hajmi 5MB dan oshmasligi kerak', 'error');
+          studentFileInput.value = '';
+          return;
+        }
+
+        state.attachedFile = file;
+        
+        // Show file info
+        studentFileName.textContent = file.name;
+        studentFileSize.textContent = `(${(file.size / 1024).toFixed(1)} KB)`;
+        studentSelectFileBtn.style.display = 'none';
+        studentFileInfo.style.display = 'flex';
+
+        // Show preview if image
+        if (file.type.startsWith('image/')) {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            studentFilePreview.src = e.target.result;
+            studentFilePreview.style.display = 'block';
+          };
+          reader.readAsDataURL(file);
+        } else {
+          studentFilePreview.style.display = 'none';
+        }
+      });
+
+      studentRemoveFileBtn.addEventListener('click', () => {
+        studentFileInput.value = '';
+        state.attachedFile = null;
+        studentSelectFileBtn.style.display = 'flex';
+        studentFileInfo.style.display = 'none';
+        studentFilePreview.src = '';
+      });
+    }
+
     // Handle Form Submit
     questionForm.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -180,17 +235,33 @@ document.addEventListener('DOMContentLoaded', () => {
       setLoading(submitQuestionBtn, true);
 
       try {
-        const response = await fetch('/api/question', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Telegram-Init-Data': getInitData()
-          },
-          body: JSON.stringify({
-            group_slug: state.studentSlug,
-            question_text: qText
-          })
-        });
+        let response;
+        if (state.attachedFile) {
+          const formData = new FormData();
+          formData.append('group_slug', state.studentSlug);
+          formData.append('question_text', qText);
+          formData.append('file', state.attachedFile);
+          
+          response = await fetch('/api/question', {
+            method: 'POST',
+            headers: {
+              'X-Telegram-Init-Data': getInitData()
+            },
+            body: formData
+          });
+        } else {
+          response = await fetch('/api/question', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Telegram-Init-Data': getInitData()
+            },
+            body: JSON.stringify({
+              group_slug: state.studentSlug,
+              question_text: qText
+            })
+          });
+        }
 
         const result = await response.json();
         
@@ -198,6 +269,16 @@ document.addEventListener('DOMContentLoaded', () => {
           // Success sequence
           questionForm.style.display = 'none';
           studentSuccess.style.display = 'block';
+          
+          // Qolgan savol sonini ko'rsatish
+          const remainingInfo = document.getElementById('remaining-info');
+          if (remainingInfo && result.remaining_today !== undefined) {
+            if (result.remaining_today > 0) {
+              remainingInfo.textContent = `📝 Bugun yana ${result.remaining_today} ta savol yuborishingiz mumkin.`;
+            } else {
+              remainingInfo.textContent = `⚠️ Bugungi kunlik limit tugadi (3/3).`;
+            }
+          }
         } else {
           showToast(result.error || 'Savol yuborishda xatolik yuz berdi', 'error');
         }
@@ -374,6 +455,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="timestamp">${timeAgo}</div>
           </div>
           <p class="question-snippet">${escapeHTML(q.question_text)}</p>
+          ${q.image_url ? '<div class="attachment-badge">📎 Rasm biriktirilgan</div>' : ''}
           <div class="question-card-footer">
             <button class="btn btn-secondary btn-sm">Javob berish</button>
           </div>
@@ -483,6 +565,14 @@ document.addEventListener('DOMContentLoaded', () => {
     replyStudentUsername.textContent = question.username ? `@${question.username}` : 'username yo\'q';
     replyQuestionTime.textContent = formatTimeAgo(question.created_at);
     replyQuestionText.textContent = question.question_text;
+    
+    if (question.image_url && replyQuestionImage) {
+      replyQuestionImage.src = question.image_url;
+      replyQuestionImage.style.display = 'block';
+    } else if (replyQuestionImage) {
+      replyQuestionImage.style.display = 'none';
+      replyQuestionImage.src = '';
+    }
     
     // Clear previous inputs
     replyText.value = '';
