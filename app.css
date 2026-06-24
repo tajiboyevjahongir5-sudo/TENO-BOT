@@ -123,6 +123,15 @@ main {
   padding-top: 15px;
 }
 
+.admin-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding-top: 10px;
+}
+
 .logo-wrapper {
   display: flex;
   justify-content: center;
