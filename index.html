@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YouTube Kanal Akademiyasi — Savol-Javob</title>
+  <!-- Telegram Web App SDK -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <!-- Google Fonts: Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="app.css">
+</head>
+<body class="loading">
+
+  <!-- Fullscreen Loading / Entry State -->
+  <div id="app-loading" class="fullscreen-overlay">
+    <div class="spinner-container">
+      <div class="spinner"></div>
+      <p>Yuklanmoqda...</p>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container"></div>
+
+  <!-- Main Container -->
+  <main id="app-container" style="display: none;">
+    
+    <!-- 1. STUDENT VIEW -->
+    <section id="student-view" class="view-panel" style="display: none;">
+      <header class="app-header">
+        <div class="logo-badge">QA</div>
+        <h1 id="student-group-title">YouTube Kanal Akademiyasi</h1>
+        <p class="subtitle">Savolingizni pastda batafsil yozib qoldiring. Admin javobi to'g'ridan-to'g'ri telegramingizga yuboriladi.</p>
+      </header>
+
+      <div class="card glassmorphic">
+        <form id="question-form">
+          <div class="form-group">
+            <label for="question-text">Sizning savolingiz</label>
+            <div class="textarea-wrapper">
+              <textarea 
+                id="question-text" 
+                placeholder="Savolingizni bu yerga yozing..." 
+                maxlength="1000" 
+                required
+              ></textarea>
+              <div class="char-counter"><span id="char-count">0</span> / 1000</div>
+            </div>
+          </div>
+          
+          <button type="submit" id="submit-question-btn" class="btn btn-primary btn-block">
+            <span class="btn-text">Savolni yuborish</span>
+            <span class="btn-spinner" style="display: none;"></span>
+          </button>
+        </form>
+      </div>
+
+      <!-- Success Screen -->
+      <div id="student-success" class="card glassmorphic success-card" style="display: none;">
+        <div class="success-icon-wrapper">
+          <div class="success-icon">
+            <svg viewBox="0 0 52 52">
+              <circle class="checkmark__circle" cx="26" cy="26" r="25" fill="none"/>
+              <path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+            </svg>
+          </div>
+        </div>
+        <h2>Rahmat!</h2>
+        <p>Savolingiz muvaffaqiyatli qabul qilindi. Tez orada telegram orqali javob olasiz.</p>
+        <button id="close-app-btn" class="btn btn-secondary btn-block">Oynani yopish</button>
+      </div>
+    </section>
+
+    <!-- 2. ADMIN VIEW -->
+    <section id="admin-view" class="view-panel" style="display: none;">
+      <!-- Sticky Navigation Bar -->
+      <nav class="admin-nav glassmorphic">
+        <div class="admin-nav-tabs" id="admin-tabs">
+          <!-- Dynamic Tabs injected here (e.g. May (3), Iyun (0)) -->
+        </div>
+      </nav>
+
+      <!-- Content Area -->
+      <div id="admin-content" class="admin-content-container">
+        <!-- Dynamic Questions List injected here -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ADMIN DIALOGS / MODALS -->
+
+  <!-- A. Question Answer Modal -->
+  <div id="reply-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-content glassmorphic animate-slide-up">
+      <div class="modal-header">
+        <h3>Javob yo'llash</h3>
+        <button class="modal-close" id="close-reply-modal-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="student-info-bar">
+          <div class="avatar" id="reply-student-avatar">AA</div>
+          <div>
+            <div class="name" id="reply-student-name">Ali Valiyev</div>
+            <div class="username" id="reply-student-username">@ali_valiyev</div>
+          </div>
+          <div class="timestamp" id="reply-question-time">12:34</div>
+        </div>
+
+        <div class="original-question-box">
+          <div class="label">Savol:</div>
+          <p id="reply-question-text">Savol matni bu yerda ko'rinadi...</p>
+        </div>
+
+        <form id="reply-form">
+          <input type="hidden" id="reply-question-id">
+          
+          <div class="form-group">
+            <label for="reply-text">Sizning javobingiz</label>
+            <textarea id="reply-text" placeholder="Javobingizni bu yerga yozing..." required></textarea>
+          </div>
+
+          <!-- File Attachment Section -->
+          <div class="form-group">
+            <label>Fayl biriktirish (Rasm, PDF, va h.k. - Maks. 10MB)</label>
+            <div class="file-upload-wrapper">
+              <input type="file" id="reply-file-input" style="display: none;">
+              <button type="button" id="select-file-btn" class="btn btn-secondary btn-sm">
+                <span>📂 Fayl tanlash</span>
+              </button>
+              <div id="selected-file-info" class="selected-file-info" style="display: none;">
+                <span id="selected-file-name" class="file-name">file.jpg</span>
+                <span id="selected-file-size" class="file-size">(245 KB)</span>
+                <button type="button" id="remove-file-btn" class="remove-file-btn">&times;</button>
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" id="submit-reply-btn" class="btn btn-primary btn-block">
+            <span class="btn-text">Javobni yuborish</span>
+            <span class="btn-spinner" style="display: none;"></span>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- B. New Group Modal -->
+  <div id="group-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-content glassmorphic animate-scale-up">
+      <div class="modal-header">
+        <h3>Yangi guruh yaratish</h3>
+        <button class="modal-close" id="close-group-modal-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="group-form">
+          <div class="form-group">
+            <label for="group-name">Guruh nomi</label>
+            <input type="text" id="group-name" placeholder="Masalan: May 2026, Iyun Intensive" required>
+          </div>
+          <button type="submit" id="submit-group-btn" class="btn btn-primary btn-block">
+            <span class="btn-text">Yaratish</span>
+            <span class="btn-spinner" style="display: none;"></span>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- C. Delete Group Confirmation Modal -->
+  <div id="confirm-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-content glassmorphic alert-modal animate-scale-up">
+      <div class="modal-header">
+        <h3>Guruhni o'chirish</h3>
+        <button class="modal-close" id="close-confirm-modal-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p id="confirm-modal-text">Ushbu guruhni va unga tegishli barcha javobsiz savollarni butunlay o'chirib yuborishni tasdiqlaysizmi?</p>
+        <div class="alert-actions">
+          <button id="confirm-cancel-btn" class="btn btn-secondary">Bekor qilish</button>
+          <button id="confirm-delete-btn" class="btn btn-danger">O'chirish</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom JS Application logic -->
+  <script src="app.js"></script>
+</body>
+</html>
