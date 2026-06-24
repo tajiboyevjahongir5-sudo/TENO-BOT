@@ -90,7 +90,7 @@ const dbHelpers = {
   },
 
   // Question Operations
-  addQuestion: (groupId, telegramUserId, username, firstName, questionText) => {
+  addQuestion: (groupId, telegramUserId, username, firstName, questionText, imageUrl = null) => {
     const data = readData();
     const newQuestion = {
       id: data.question_id_counter++,
@@ -99,6 +99,7 @@ const dbHelpers = {
       username,
       first_name: firstName,
       question_text: questionText,
+      image_url: imageUrl,
       created_at: new Date().toISOString()
     };
     data.questions.push(newQuestion);
@@ -123,6 +124,21 @@ const dbHelpers = {
     data.questions = data.questions.filter(q => q.id !== id);
     writeData(data);
     return { changes: 1 };
+  },
+
+  // Kunlik savol sonini hisoblash (O'zbekiston vaqti UTC+5)
+  countTodayQuestionsByUser: (telegramUserId) => {
+    const data = readData();
+    // O'zbekiston vaqtida bugungi kunni aniqlash
+    const now = new Date();
+    const uzNow = new Date(now.getTime() + 5 * 60 * 60 * 1000);
+    const todayStr = uzNow.toISOString().slice(0, 10); // "YYYY-MM-DD"
+
+    return data.questions.filter(q => {
+      if (q.telegram_user_id !== telegramUserId) return false;
+      const qDate = new Date(new Date(q.created_at).getTime() + 5 * 60 * 60 * 1000);
+      return qDate.toISOString().slice(0, 10) === todayStr;
+    }).length;
   }
 };
 
