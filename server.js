@@ -29,6 +29,7 @@ const bot = new Telegraf(BOT_TOKEN);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(__dirname));
 
 // Multer setup for handling file uploads (max 10MB)
 const storage = multer.memoryStorage();
