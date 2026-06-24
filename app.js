@@ -59,6 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const closeGroupModalBtn = document.getElementById('close-group-modal-btn');
   const groupForm = document.getElementById('group-form');
   const groupNameInput = document.getElementById('group-name');
+  const submitGroupBtn = document.getElementById('submit-group-btn');
 
   const confirmModal = document.getElementById('confirm-modal');
   const closeConfirmModalBtn = document.getElementById('close-confirm-modal-btn');
