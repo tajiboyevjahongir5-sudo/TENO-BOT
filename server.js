@@ -38,6 +38,25 @@ const upload = multer({
   limits: { fileSize: 10 * 1024 * 1024 } // 10MB
 });
 
+// Multer setup for student images (save to disk)
+const diskStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const dir = path.join(__dirname, 'public', 'uploads');
+    if (!require('fs').existsSync(dir)){
+        require('fs').mkdirSync(dir, { recursive: true });
+    }
+    cb(null, dir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  }
+});
+const diskUpload = multer({ 
+  storage: diskStorage,
+  limits: { fileSize: 5 * 1024 * 1024 } // 5MB for student images
+});
+
 // Helper function to verify Telegram Web App initData
 function verifyTelegramInitData(initData, token) {
   // Development mode bypass helper
@@ -140,9 +159,26 @@ function generateSlug(text) {
 // API ENDPOINTS
 
 // 1. Submit a new question (Student)
-app.post('/api/question', (req, res) => {
+app.post('/api/question', diskUpload.single('file'), (req, res) => {
   if (!req.tgUser) {
     return res.status(401).json({ error: 'Telegram orqali avtorizatsiya talab qilinadi' });
+  }
+
+  // Soat tekshiruvi: faqat 10:00 dan 22:00 gacha (O'zbekiston vaqti UTC+5)
+  const now = new Date();
+  const uzHour = (now.getUTCHours() + 5) % 24;
+  if (uzHour < 10 || uzHour >= 22) {
+    return res.status(403).json({ 
+      error: 'Savol yuborish faqat soat 10:00 dan 22:00 gacha mumkin (Toshkent vaqti). Iltimos, keyinroq urinib ko\'ring.' 
+    });
+  }
+
+  // Kunlik limit tekshiruvi: max 3 ta savol
+  const todayCount = db.countTodayQuestionsByUser(req.tgUser.id);
+  if (todayCount >= 3) {
+    return res.status(429).json({ 
+      error: 'Siz bugun 3 ta savol yubordingiz. Kunlik limit tugadi. Ertaga yana savol yuborishingiz mumkin.' 
+    });
   }
 
   const { group_slug, question_text } = req.body;
@@ -155,15 +191,26 @@ app.post('/api/question', (req, res) => {
     return res.status(404).json({ error: 'Faol guruh topilmadi yoki bu guruh o\'chirilgan' });
   }
 
+  let imageUrl = null;
+  if (req.file) {
+    imageUrl = '/uploads/' + req.file.filename;
+  }
+
   try {
     db.addQuestion(
       group.id,
       req.tgUser.id,
       req.tgUser.username || null,
       req.tgUser.first_name || 'Foydalanuvchi',
-      question_text.trim()
+      question_text.trim(),
+      imageUrl
     );
-    res.json({ success: true, message: 'Savolingiz muvaffaqiyatli qabul qilindi!' });
+    const remaining = 2 - todayCount; // 3 - 1 (hozirgi) - todayCount
+    res.json({ 
+      success: true, 
+      message: 'Savolingiz muvaffaqiyatli qabul qilindi!',
+      remaining_today: remaining >= 0 ? remaining : 0
+    });
   } catch (error) {
     console.error('Error saving question:', error);
     res.status(500).json({ error: 'Savolni saqlashda xatolik yuz berdi' });
