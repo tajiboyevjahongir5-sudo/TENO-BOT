@@ -1,5 +1,0 @@
-BOT_TOKEN=YOUR_TELEGRAM_BOT_TOKEN
-ADMIN_ID=YOUR_TELEGRAM_USER_ID
-WEBAPP_URL=https://your-railway-app-url.up.railway.app
-PORT=3000
-NODE_ENV=development
